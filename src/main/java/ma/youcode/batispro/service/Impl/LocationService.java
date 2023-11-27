@@ -4,35 +4,20 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ma.youcode.batispro.domain.entity.*;
 import ma.youcode.batispro.domain.enums.Equipment.EquipmentStatus;
-import ma.youcode.batispro.domain.enums.Location.LocationFolderStatus;
 import ma.youcode.batispro.domain.enums.Location.LocationStatus;
-import ma.youcode.batispro.domain.enums.UserRole;
-import ma.youcode.batispro.dto.LocationStatusUpdateDto;
-import ma.youcode.batispro.dto.RLocationDTO.LocationCreateRequestDTO;
 import ma.youcode.batispro.dto.RLocationDTO.LocationResponseDTO;
-import ma.youcode.batispro.dto.clientDTO.ClientDossierRequestDto;
 import ma.youcode.batispro.dto.locationDTO.LocationCreationRequestDto;
-import ma.youcode.batispro.dto.locationDTO.LocationDetailsDto;
-import ma.youcode.batispro.dto.locationDTO.LocationFolderDetailsDto;
 import ma.youcode.batispro.dto.locationDTO.LocationRequestDto;
-import ma.youcode.batispro.exception.DossierNotFoundException;
 import ma.youcode.batispro.exception.EquipmentNotFoundException;
-import ma.youcode.batispro.exception.EquipmentOutOfStockException;
 import ma.youcode.batispro.mapper.LocationCreationRequestDtoMapper;
 import ma.youcode.batispro.mapper.LocationFolderDetailsDtoMapper;
 import ma.youcode.batispro.repository.*;
 import ma.youcode.batispro.service.ILocationService;
-import org.hibernate.query.criteria.internal.expression.function.AggregationFunction;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import javax.validation.Valid;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
@@ -48,7 +33,7 @@ public class LocationService implements ILocationService {
     private final ClientRespository clientRespository;
 
     @Override
-    public LocationResponseDTO createLocation(LocationCreationRequestDto locationRequest) {
+    public List<LocationRequestDto> createLocation(LocationCreationRequestDto locationRequest) {
         List<LocationRequestDto> locationRequests = locationRequest.locationRequests();
 
         //Get User Manual
@@ -84,7 +69,6 @@ public class LocationService implements ILocationService {
                 throw new IllegalArgumentException("Equipment out of stock");
             }
 
-            //Save locations in array
             Location location = Location.builder()
                     .reference(UUID.randomUUID())
                     .quantity(e.quantity())
@@ -92,11 +76,14 @@ public class LocationService implements ILocationService {
                     .endDate(e.endDate())
                     .equipment(equipment)
                     .build();
+            //Save locations in array
             locationList.add(location);
         });
-
         //Generate UniqueDossier
         String uniqueDossierNumber = "D" + LocalDateTime.now().getNano();
+
+        //Save All location
+        locationRepository.saveAll(locationList);
 
         //Save All dossierLocations
         locationList.stream().forEach(location -> {
@@ -110,10 +97,9 @@ public class LocationService implements ILocationService {
             locationFolderRepository.save(dossierLocation);
         });
 
-        //Save All location
-        locationRepository.saveAll(locationList);
 
-        return null;
+
+        return LocationResponseDTO.mapToDTO(locationList);
 
     }
 

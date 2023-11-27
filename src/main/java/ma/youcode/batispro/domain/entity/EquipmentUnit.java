@@ -1,5 +1,6 @@
 package ma.youcode.batispro.domain.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import ma.youcode.batispro.domain.enums.Equipment.EquipmentStatus;
 
@@ -18,7 +19,9 @@ public class EquipmentUnit {
 
     @ManyToOne
     @JoinColumn(name = "equipment_id")
+    @JsonIgnoreProperties("equipmentUnits")
     private Equipment equipment;
+
 
 
     @Override

@@ -1,22 +1,12 @@
 package ma.youcode.batispro.controller;
 
 import lombok.RequiredArgsConstructor;
-import ma.youcode.batispro.dto.LocationStatusUpdateDto;
-import ma.youcode.batispro.dto.RLocationDTO.LocationCreateRequestDTO;
-import ma.youcode.batispro.dto.RLocationDTO.LocationResponseDTO;
 import ma.youcode.batispro.dto.locationDTO.LocationCreationRequestDto;
-import ma.youcode.batispro.dto.locationDTO.LocationFolderDetailsDto;
 import ma.youcode.batispro.dto.locationDTO.LocationRequestDto;
-import ma.youcode.batispro.exception.DossierNotFoundException;
 import ma.youcode.batispro.service.ILocationService;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
 
 @RestController
@@ -26,8 +16,8 @@ public class LocationController {
     private final ILocationService locationService;
 
     @PostMapping()
-    public ResponseEntity<LocationResponseDTO> createLocation(@RequestBody LocationCreationRequestDto locationCreationRequestDto){
-        LocationResponseDTO locationFolder = locationService.createLocation(locationCreationRequestDto);
+    public ResponseEntity<List<LocationRequestDto>> createLocation(@RequestBody LocationCreationRequestDto locationCreationRequestDto){
+        List<LocationRequestDto> locationFolder = locationService.createLocation(locationCreationRequestDto);
         return ResponseEntity.ok().body(locationFolder);
     }
 

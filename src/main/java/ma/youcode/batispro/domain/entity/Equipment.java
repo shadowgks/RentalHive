@@ -1,5 +1,6 @@
 package ma.youcode.batispro.domain.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import ma.youcode.batispro.domain.enums.Equipment.EquipmentStatus;
 import ma.youcode.batispro.domain.enums.Equipment.EquipmentType;
@@ -25,6 +26,10 @@ public class Equipment {
     @Enumerated( EnumType.STRING)
     private EquipmentStatus equipmentStatus;
 
+    @JsonIgnoreProperties("equipment")
+    @OneToMany(mappedBy = "equipment", cascade = CascadeType.ALL)
+    List<EquipmentUnit> equipmentUnits;
+
 
     public Equipment(Long id, String name, EquipmentType equipmentType, String model, String description, EquipmentStatus equipmentStatus) {
         this.id = id;
@@ -35,8 +40,6 @@ public class Equipment {
         this.equipmentStatus = equipmentStatus;
     }
 
-    @OneToMany(mappedBy = "equipment", cascade = CascadeType.ALL)
-    List<EquipmentUnit> equipmentUnits;
 
     @Override
     public String toString() {

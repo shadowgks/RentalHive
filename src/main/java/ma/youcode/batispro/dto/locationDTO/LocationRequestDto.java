@@ -2,6 +2,7 @@ package ma.youcode.batispro.dto.locationDTO;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
+import ma.youcode.batispro.domain.entity.Equipment;
 
 import javax.validation.constraints.NotEmpty;
 import java.time.LocalDate;
@@ -15,6 +16,7 @@ public record LocationRequestDto (
         @NotEmpty Integer quantity,
         @NotEmpty LocalDate startDate,
         @NotEmpty LocalDate endDate,
-        @NotEmpty String status
+        @NotEmpty String status,
+        Equipment Equipment
 ){
 }
