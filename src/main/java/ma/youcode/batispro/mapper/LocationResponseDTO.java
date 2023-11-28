@@ -1,4 +1,4 @@
-package ma.youcode.batispro.dto.RLocationDTO;
+package ma.youcode.batispro.mapper;
 
 import lombok.Builder;
 import ma.youcode.batispro.domain.entity.Location;

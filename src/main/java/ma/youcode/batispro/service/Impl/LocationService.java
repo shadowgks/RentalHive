@@ -5,7 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import ma.youcode.batispro.domain.entity.*;
 import ma.youcode.batispro.domain.enums.Equipment.EquipmentStatus;
 import ma.youcode.batispro.domain.enums.Location.LocationStatus;
-import ma.youcode.batispro.dto.RLocationDTO.LocationResponseDTO;
+import ma.youcode.batispro.dto.locationDTO.LocationFolderRequestDto;
+import ma.youcode.batispro.mapper.LocationFolderResponseDTO;
+import ma.youcode.batispro.mapper.LocationResponseDTO;
 import ma.youcode.batispro.dto.locationDTO.LocationCreationRequestDto;
 import ma.youcode.batispro.dto.locationDTO.LocationRequestDto;
 import ma.youcode.batispro.exception.EquipmentNotFoundException;
@@ -32,6 +34,13 @@ public class LocationService implements ILocationService {
     private final LocationFolderDetailsDtoMapper locationFolderDetailsDtoMapper;
     private final ClientRespository clientRespository;
 
+
+    @Override
+    public List<LocationFolderRequestDto> getLocationFolderByNumber(String numberFolder) {
+        return locationFolderRepository.findByDossierNumber(numberFolder)
+                .stream().map(LocationFolderResponseDTO::mapToDto).toList();
+    }
+
     @Override
     public List<LocationRequestDto> createLocation(LocationCreationRequestDto locationRequest) {
         List<LocationRequestDto> locationRequests = locationRequest.locationRequests();
@@ -48,25 +57,37 @@ public class LocationService implements ILocationService {
             throw new IllegalArgumentException("Invalid date for location");
         }
 
-
         List<Location> locationList = new ArrayList<>();
         locationRequests.stream().forEach(e -> {
             //Check Equipment If Exist
             Equipment equipment = equipmentRepository.findByModel(e.model())
                     .orElseThrow(() -> new EquipmentNotFoundException("This is Equipment not found"));
+
             //Check status equipment
             if(!equipment.getEquipmentStatus().equals(EquipmentStatus.valueOf(e.status()))){
                 throw new IllegalArgumentException("this is status not valid");
             }
             //Get EquipmentUnit
             List<EquipmentUnit> equipmentUnit =  equipmentUnitRepository.findByEquipmentUnitWithEquipment(equipment.getId());
+
+            //Get Sum Quantity Reserved
+            List<Location> locationWithEquipmentList = locationRepository.findByLocationWithEquipment(1L);
+            Integer sumQuantityReserved = locationWithEquipmentList.stream()
+                    .filter(t -> t.getStartDate().isAfter(e.startDate()) && t.getEndDate().isBefore(e.endDate())
+                            || t.getStartDate().equals(e.startDate()) && t.getEndDate().equals(e.endDate()))
+                    .map(Location::getQuantity)
+                    .reduce(0, Integer::sum);
+
             //Check Available Quantity Equipment
-            Integer availableQuantityEquipment = equipmentUnit.stream()
+            Integer quantityEquipment = equipmentUnit.stream()
                     .map(EquipmentUnit::getQuantity)
                     .reduce(0, Integer::sum);
 
-            if(availableQuantityEquipment < e.quantity()){
+            Integer sumCheck = sumQuantityReserved + e.quantity();
+            if(sumCheck > quantityEquipment){
                 throw new IllegalArgumentException("Equipment out of stock");
+            } else if (e.quantity() > quantityEquipment) {
+                throw new IllegalArgumentException("This quantity is not available at equipment");
             }
 
             Location location = Location.builder()
@@ -97,65 +118,10 @@ public class LocationService implements ILocationService {
             locationFolderRepository.save(dossierLocation);
         });
 
-
-
         return LocationResponseDTO.mapToDTO(locationList);
-
     }
 
 
-//    @Override
-//    public LocationResponseDTO createLocation(LocationCreationRequestDto locationRequest) {
-////        //Get equipment is found
-////        Optional<Equipment> equipment = Optional.ofNullable(equipmentRepository.findByModel(model_equipment)
-////                .orElseThrow(() -> new IllegalArgumentException("Equipment Not Found")));
-////
-////        //Get User is found
-////        Optional<Client> client = Optional.ofNullable(clientRespository.findByCin(cin_client)
-////                .orElseThrow(() -> new IllegalArgumentException("Client Not Found")));
-//
-////        //Get quantity equipment
-////        EquipmentUnit equipmentUnit =  equipmentUnitRepository.findByEquipmentUnitWithEquipment(equipment.get().getId());
-////        Integer equipmentQuantity = equipmentUnit.getQuantity();
-//
-//        //Check Date
-//        LocalDate startDate = locationRequest.startDate();
-//        LocalDate endDate = locationRequest.endDate();
-//        if(startDate.isBefore(LocalDate.now()) || endDate.isBefore(startDate)){
-//            throw new IllegalArgumentException("Invalid date for location");
-//        }
-//
-////        //Check Quantity
-////        Boolean isQuantitySufficient  = equipmentQuantity < locationRequest.quantity();
-////        if (isQuantitySufficient){
-////            throw new IllegalArgumentException("This equipment cannot be reserved due to quantity");
-////        }
-//
-//        // Stock location
-//        UUID randomRef = UUID.randomUUID();
-//        Location location = Location.builder()
-//                .reference(randomRef)
-//                .quantity(locationRequest.quantity())
-//                .startDate(locationRequest.startDate())
-//                .endDate(locationRequest.endDate())
-//                .equipment(equipment.get())
-//                .build();
-//        locationRepository.save(location);
-//
-//        //Stock dossierLocation
-//        LocalDateTime dateNow = LocalDateTime.now();
-//        String uniqueDossierNumber = "D" + LocalDateTime.now().getNano();
-//        DossierLocation dossierLocation = DossierLocation.builder()
-//                .dossierNumber(uniqueDossierNumber)
-//                .dateCreation(dateNow)
-//                .Location(location)
-//                .client(client.get())
-//                .status(LocationStatus.PENDING)
-//                .build();
-//        locationFolderRepository.save(dossierLocation);
-//
-//
-////        return LocationCreationRequestDtoMapper::mapToDto(location);
-//        return null;
-//    }
+
+
 }
