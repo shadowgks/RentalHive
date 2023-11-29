@@ -43,17 +43,19 @@ public class BillingService implements IBillingService {
 
     @Override
     public BillDetailsDto createBilling(BillDto billRequest) {
+        //Get location folder
         Optional<DossierLocation> dossierLocation = Optional.ofNullable(locationFolderRepository.findByDossierNumber(billRequest.dossierNumber())
                 .orElseThrow(() -> new IllegalArgumentException("This dossier not found")));
         DossierLocation dossierLocationGet = dossierLocation.get();
 
+        //Check dossierNumber if exist on bill
+        Optional<Bill> billByDossierLocation = billingRepository.findBillByDossierLocation(dossierLocationGet);
+        if (billByDossierLocation.isPresent()){
+            throw new IllegalArgumentException("This Dossier exist on bill!");
+        }
+
         //Generate number for billing
         String uniqueNumberBilling = "B" + (LocalDateTime.now()).getNano();
-
-        //Create object billDetail
-        BillDetails billDetails1 = BillDetails.builder()
-                .totalPrice(billRequest.billTotal())
-                .build();
 
         //Create object bill
         Bill bill = Bill.builder()
