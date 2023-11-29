@@ -2,7 +2,7 @@ package ma.youcode.batispro.dto.mapper;
 
 import lombok.RequiredArgsConstructor;
 import ma.youcode.batispro.domain.entity.Bill;
-import ma.youcode.batispro.dto.BillDto;
+import ma.youcode.batispro.dto.BillingDTO.BillDto;
 import org.springframework.stereotype.Component;
 
 @Component

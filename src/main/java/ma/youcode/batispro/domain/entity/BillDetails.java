@@ -2,10 +2,7 @@ package ma.youcode.batispro.domain.entity;
 
 import lombok.*;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.OneToOne;
+import javax.persistence.*;
 
 @Entity
 @Setter @Getter
@@ -16,13 +13,9 @@ public class BillDetails {
     @GeneratedValue(strategy = javax.persistence.GenerationType.IDENTITY)
     private Long id;
     private Double totalPrice;
-    private Double priceUnit;
-    private Integer quantity;
 
-
-    @OneToOne
+    @ManyToOne
+    @JoinColumn(name = "bill_id")
     private Bill bill;
-
-
 
 }

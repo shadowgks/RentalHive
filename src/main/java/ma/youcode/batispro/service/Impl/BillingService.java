@@ -5,21 +5,25 @@ import lombok.extern.slf4j.Slf4j;
 import ma.youcode.batispro.domain.entity.Bill;
 import ma.youcode.batispro.domain.entity.BillDetails;
 import ma.youcode.batispro.domain.entity.DossierLocation;
-import ma.youcode.batispro.domain.entity.Location;
 import ma.youcode.batispro.domain.enums.BillStatus;
 import ma.youcode.batispro.domain.enums.Location.LocationStatus;
 import ma.youcode.batispro.domain.enums.PaymentStatus;
-import ma.youcode.batispro.dto.BillDto;
+import ma.youcode.batispro.dto.BillingDTO.BillDto;
 import ma.youcode.batispro.dto.mapper.BillDtoMapper;
 import ma.youcode.batispro.exception.BillNotFoundException;
-import ma.youcode.batispro.exception.BillingCreationException;
 import ma.youcode.batispro.exception.DossierNotFoundException;
+import ma.youcode.batispro.exception.FolderNotFoundException;
+import ma.youcode.batispro.mapper.Billing.BillingResponseDtoMapper;
+import ma.youcode.batispro.repository.BillingDetailsRepository;
 import ma.youcode.batispro.repository.BillingRepository;
+import ma.youcode.batispro.repository.LocationFolderRepository;
+import ma.youcode.batispro.repository.LocationRepository;
 import ma.youcode.batispro.service.IBillingService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.StreamSupport;
@@ -30,79 +34,45 @@ import java.util.stream.StreamSupport;
 public class BillingService implements IBillingService {
 
     private final BillingRepository billingRepository;
+    private final BillingDetailsRepository billingDetailsRepository;
     private final BillDtoMapper billDtoMapper;
-    private final LocationService locationService;
-    @Override
-    public List<BillDto> getAllBills(Pageable pageable) {
-        return StreamSupport.stream(billingRepository.findAll(pageable).spliterator(), false)
-                .map(billDtoMapper::mapToDto)
-                .toList();
-    }
+    private final LocationFolderRepository locationFolderRepository;
+
+
 
     @Override
-    public List<BillDto> getAllBillsByStatus(BillStatus status, Pageable pageable) {
-        return null;
-    }
+    public BillDto createBilling(BillDto billRequest) {
+        Optional<DossierLocation> dossierLocation = Optional.ofNullable(locationFolderRepository.findByDossierNumber(billRequest.dossierNumber())
+                .orElseThrow(() -> new IllegalArgumentException("This dossier not found")));
+        DossierLocation dossierLocationGet = dossierLocation.get();
 
-//    @Override
-//    public List<BillDto> getAllBillsByStatus(BillStatus status, Pageable pageable) {
-//        return StreamSupport.stream(billingRepository.findByStatus(status, pageable).spliterator(), false)
-//                .map(billDtoMapper::mapToDto)
-//                .toList();
-//    }
+        //Generate number for billing
+        String uniqueNumberBilling = "B" + (LocalDateTime.now()).getNano();
 
-    @Override
-    public BillDto getBillByNumber(String billNumber) {
-        return billingRepository.findByBillNumber(billNumber)
-                .map(billDtoMapper::mapToDto)
-                .orElseThrow();
-    }
+        //Create object billDetail
+        BillDetails billDetails1 = BillDetails.builder()
+                .totalPrice(billRequest.billTotal())
+                .build();
 
-    @Override
-    public BillDto createBill(String dossierNumber) throws DossierNotFoundException {
-        return null;
-    }
-
-//    @Override
-//    public BillDto createBill(String dossierNumber) throws DossierNotFoundException {
-//        DossierLocation folder = locationService.findLocationFolderByNumber(dossierNumber);
-//        List<Location> list = folder.getLocation().parallelStream().filter(location -> location.getStatus().equals(LocationStatus.ACCEPTED))
-//                .toList();
-//        if(list.isEmpty()) throw new BillingCreationException("Cannot generate a bill for a dossier that has no accepted reservations");
-//        Bill bill = Bill.builder()
-//                .dateConfirmation(LocalDateTime.now())
-//                .billNumber("BILL-" + LocalDateTime.now().getNano())
-//                .client(folder.getClient())
-//                .dossierLocation(folder)
-//                .status(BillStatus.CREATED)
-//                .paymentStatus(PaymentStatus.PENDING)
-//                .build();
-//        Bill billSaved = billingRepository.save(bill);
-//        return billDtoMapper.mapToDto(billSaved);
-//    }
-
-    @Override
-    public BillDto updateBill(String billNumber, BillStatus billStatus) {
-        return null;
-    }
-
-    @Override
-    public void deleteBill(String billNumber) {
-        Optional<Bill> optionalBill = billingRepository.findByBillNumber(billNumber);
-        if(optionalBill.isEmpty()) throw new BillNotFoundException("Cannot find bill with number: " + billNumber);
-        Bill bill = optionalBill.get();
-        bill.setStatus(BillStatus.CANCELED);
+        //Create object bill
+        Bill bill = Bill.builder()
+                .billNumber(uniqueNumberBilling)
+                .dateCreation(LocalDateTime.now())
+                .status(BillStatus.CREATED)
+                .paymentStatus(PaymentStatus.PENDING)
+                .client(dossierLocationGet.getClient())
+                .comment(billRequest.comment())
+                .dossierLocation(dossierLocationGet)
+                .build();
         billingRepository.save(bill);
-    }
 
-    @Override
-    public BillDto payBill(String billNumber) {
-        Optional<Bill> optionalBill = billingRepository.findByBillNumber(billNumber);
-        if(optionalBill.isEmpty()) throw new BillNotFoundException("Cannot find bill with number: " + billNumber);
-        Bill bill = optionalBill.get();
-        bill.setPaymentStatus(PaymentStatus.PAID);
-        bill.setStatus(BillStatus.ACCEPTED); // automatically accepted if paid
-        billingRepository.save(bill);
-        return billDtoMapper.mapToDto(bill);
+        //Create object billDetail
+        BillDetails billDetails2 = BillDetails.builder()
+                .totalPrice(billRequest.billTotal())
+                .bill(bill)
+                .build();
+        billingDetailsRepository.save(billDetails2);
+
+        return BillingResponseDtoMapper.mapToDto(bill);
     }
 }

@@ -7,5 +7,5 @@ import java.util.List;
 import java.util.Optional;
 
 public interface LocationFolderRepository extends PagingAndSortingRepository<DossierLocation, Long> {
-    List<DossierLocation> findByDossierNumber(String dossierNumber);
+    Optional<DossierLocation> findByDossierNumber(String dossierNumber);
 }

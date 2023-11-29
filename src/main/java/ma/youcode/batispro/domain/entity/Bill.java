@@ -24,12 +24,8 @@ public class Bill {
     private LocalDateTime dateConfirmation;
     private String comment ;
 
-
-    @OneToOne(cascade = CascadeType.ALL)
-    private BillDetails billDetails;
-
-
-
+//    @OneToOne(cascade = CascadeType.ALL)
+//    private BillDetails billDetails;
 
     @ManyToOne
     @JoinColumn(name = "client_id")

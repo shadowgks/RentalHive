@@ -8,7 +8,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ILocationService {
-    List<LocationFolderRequestDto> getLocationFolderByNumber(String numberFolder);
+    LocationFolderRequestDto getLocationFolderByNumber(String numberFolder);
     List<LocationRequestDto> createLocation(LocationCreationRequestDto locationRequest);
+
+    LocationFolderRequestDto acceptedLocationFolder(String numberFolder);
 
 }

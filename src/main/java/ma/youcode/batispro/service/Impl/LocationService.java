@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,9 +37,10 @@ public class LocationService implements ILocationService {
 
 
     @Override
-    public List<LocationFolderRequestDto> getLocationFolderByNumber(String numberFolder) {
-        return locationFolderRepository.findByDossierNumber(numberFolder)
-                .stream().map(LocationFolderResponseDTO::mapToDto).toList();
+    public LocationFolderRequestDto getLocationFolderByNumber(String numberFolder) {
+        Optional<DossierLocation> dossierLocation = Optional.ofNullable(locationFolderRepository.findByDossierNumber(numberFolder)
+                .orElseThrow(() -> new IllegalArgumentException("Not found this dossier")));
+        return LocationFolderResponseDTO.mapToDto(dossierLocation.get());
     }
 
     @Override
@@ -100,14 +102,14 @@ public class LocationService implements ILocationService {
             //Save locations in array
             locationList.add(location);
         });
-        //Generate UniqueDossier
-        String uniqueDossierNumber = "D" + LocalDateTime.now().getNano();
-
         //Save All location
         locationRepository.saveAll(locationList);
 
         //Save All dossierLocations
         locationList.stream().forEach(location -> {
+            //Generate UniqueDossier
+            String uniqueDossierNumber = "D" + LocalDateTime.now().getNano();
+
             DossierLocation dossierLocation = DossierLocation.builder()
                     .dossierNumber(uniqueDossierNumber)
                     .dateCreation(LocalDateTime.now())
@@ -121,7 +123,14 @@ public class LocationService implements ILocationService {
         return LocationResponseDTO.mapToDTO(locationList);
     }
 
-
+    @Override
+    public LocationFolderRequestDto acceptedLocationFolder(String numberFolder) {
+        Optional<DossierLocation> dossierLocation = Optional.ofNullable(locationFolderRepository.findByDossierNumber(numberFolder)
+                .orElseThrow(() -> new IllegalArgumentException("This dossier not found!")));
+            dossierLocation.get().setStatus(LocationStatus.ACCEPTED);
+        locationFolderRepository.save(dossierLocation.get());
+        return LocationFolderResponseDTO.mapToDto(dossierLocation.get());
+    }
 
 
 }
