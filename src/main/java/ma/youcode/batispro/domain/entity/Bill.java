@@ -20,6 +20,7 @@ public class Bill {
     private LocalDateTime dateCreation;
     @Enumerated(EnumType.STRING)
     private BillStatus status;
+    @Enumerated(EnumType.STRING)
     private PaymentStatus paymentStatus;
     private LocalDateTime dateConfirmation;
     private String comment ;

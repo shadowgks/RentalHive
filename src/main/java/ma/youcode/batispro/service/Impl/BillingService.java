@@ -8,6 +8,7 @@ import ma.youcode.batispro.domain.entity.DossierLocation;
 import ma.youcode.batispro.domain.enums.BillStatus;
 import ma.youcode.batispro.domain.enums.Location.LocationStatus;
 import ma.youcode.batispro.domain.enums.PaymentStatus;
+import ma.youcode.batispro.dto.BillingDTO.BillDetailsDto;
 import ma.youcode.batispro.dto.BillingDTO.BillDto;
 import ma.youcode.batispro.dto.mapper.BillDtoMapper;
 import ma.youcode.batispro.exception.BillNotFoundException;
@@ -41,7 +42,7 @@ public class BillingService implements IBillingService {
 
 
     @Override
-    public BillDto createBilling(BillDto billRequest) {
+    public BillDetailsDto createBilling(BillDto billRequest) {
         Optional<DossierLocation> dossierLocation = Optional.ofNullable(locationFolderRepository.findByDossierNumber(billRequest.dossierNumber())
                 .orElseThrow(() -> new IllegalArgumentException("This dossier not found")));
         DossierLocation dossierLocationGet = dossierLocation.get();
@@ -67,12 +68,12 @@ public class BillingService implements IBillingService {
         billingRepository.save(bill);
 
         //Create object billDetail
-        BillDetails billDetails2 = BillDetails.builder()
+        BillDetails billDetails = BillDetails.builder()
                 .totalPrice(billRequest.billTotal())
                 .bill(bill)
                 .build();
-        billingDetailsRepository.save(billDetails2);
+        billingDetailsRepository.save(billDetails);
 
-        return BillingResponseDtoMapper.mapToDto(bill);
+        return BillingResponseDtoMapper.mapToDto(billDetails);
     }
 }

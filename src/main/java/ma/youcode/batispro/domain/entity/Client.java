@@ -23,10 +23,4 @@ public class Client extends Users{
     private String phone;
     private String cin;
 
-    public Client(String name, String email, ma.youcode.batispro.domain.enums.UserRole UserRole, boolean enable, String address, String phone, String cin) {
-        super(name, email, UserRole, enable);
-        this.address = address;
-        this.phone = phone;
-        this.cin = cin;
-    }
 }

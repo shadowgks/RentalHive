@@ -6,7 +6,7 @@ import ma.youcode.batispro.domain.entity.Bill;
 @Builder
 public record BillDetailsDto(
         String dossierNumber,
-        String totalPrice,
+        Double totalPrice,
         Bill bill
 ) {
 }

@@ -1,6 +1,7 @@
 package ma.youcode.batispro.controller;
 
 import lombok.RequiredArgsConstructor;
+import ma.youcode.batispro.dto.BillingDTO.BillDetailsDto;
 import ma.youcode.batispro.dto.BillingDTO.BillDto;
 import ma.youcode.batispro.mapper.Billing.BillingResponseDtoMapper;
 import ma.youcode.batispro.service.Impl.BillingService;
@@ -20,7 +21,7 @@ public class BillingController {
     private final BillingService billingService;
 
     @PostMapping
-    public ResponseEntity<BillDto> createBilling(@RequestBody BillDto billRequest){
+    public ResponseEntity<BillDetailsDto> createBilling(@RequestBody BillDto billRequest){
         return ResponseEntity.status(HttpStatus.CREATED).body(billingService.createBilling(billRequest));
     }
 
